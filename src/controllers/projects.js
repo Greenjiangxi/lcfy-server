@@ -7,56 +7,64 @@ const knex = require('knex')({
 });
 
 module.exports = {
-    getProjects: async (ctx, next) => {
-        let projects = await knex('projects').select('*');
-        let newProjects = [];
+    createPayment: async (ctx, next) => {
 
-        await Promise.map(projects, async project => {
-            let boughtQuantity = await knex('transactions').where({
-                project_id: project.id
-            }).sum('quantity as quantity');
-            project.boughtQuantity = _.isNil(boughtQuantity[0].quantity) ? 0 : boughtQuantity[0].quantity;
-            project.boughtProgress = Math.floor(_.toNumber(project.boughtQuantity) * 100 / _.toNumber(project.quantity));
-            newProjects.push(project);
-        });
-        newProjects = _.sortBy(newProjects, ['id']);
-
-        ctx.body = newProjects;
+        ctx.body = {};
     },
 
-    getProject: async (ctx, next) => {
+    getComodities: async (ctx, next) => {
+        let comodities = await knex('comodities').select('*');
+        
+        comodities = _.sortBy(comodities, ['id']);
+
+        ctx.body = comodities;
+    },
+
+    getProperties: async (ctx, next) => {
+        let token = ctx.state.user;
+
+        let properties = await knex('comodities').where({
+            owner: token.phone
+        }).select('*');
+        
+        properties = _.sortBy(properties, ['id']);
+
+        ctx.body = properties;
+    },
+
+    getComodity: async (ctx, next) => {
         let id = ctx.params.id;
-        let project = await knex('projects').where({
+        let comodity = await knex('comodities').where({
             id: id
         }).select('*');
 
-        ctx.body = project[0];
+        ctx.body = comodity[0];
     },
 
-    getTransactions: async (ctx, next) => {
+    getLogs: async (ctx, next) => {
         let token = ctx.state.user;
-        let newTransactions = [];
+        let newLogs = [];
 
-        let transactions = await knex('transactions').where({
-            phone: token.phone
+        let logs = await knex('logs').where({
+            owner: token.phone
         }).select('*');
-        await Promise.map(transactions, async transaction => {
-            let project = await knex('projects').where({
-                id: transaction.project_id
+        await Promise.map(logs, async log => {
+            let comodity = await knex('comodities').where({
+                id: log.comodity_id
             }).select('*');
 
-            newTransactions.push({
-                created_date: transaction.created_date,
-                date: moment(transaction.created_date).format('YYYY-MM-DD HH:MM'),
-                project: project[0].title,
-                action: transaction.action,
-                quantity: transaction.quantity + project[0].unit,
-                price: transaction.price + '元',
+            newLogs.push({
+                created_date: log.created_date,
+                date: moment(log.created_date).format('YYYY-MM-DD HH:MM'),
+                comodity: comodity[0].title,
+                action: log.action,
+                price: log.price + '元',
+                description: log.description,
             });
         });
-        newTransactions = _.sortBy(newTransactions, ['created_date']);
+        newLogs = _.sortBy(newLogs, ['created_date']);
 
-        ctx.body = newTransactions;
+        ctx.body = newLogs;
     },
 
     trade: async (ctx, next) => {

@@ -20,7 +20,7 @@ module.exports = {
         let result = await smsClient.sendSMS({
             PhoneNumbers: request.phone,
             SignName: '岚川方圆',
-            TemplateCode: 'SMS_126710101',
+            TemplateCode: 'SMS_127990048',
             TemplateParam: '{"code":' + code + '}'
         });
 
@@ -53,7 +53,7 @@ module.exports = {
         }
     },
 
-    signin: async (ctx, next) => {
+    signinVc: async (ctx, next) => {
         let request = JSON.parse(ctx.request.body);
 
         const token = jwt.sign({
@@ -69,21 +69,71 @@ module.exports = {
 
         if (_.isEmpty(vc)) {
             throw Error('验证码错误');
+        }
+
+        ctx.body = {
+            token: token
+        };
+    },
+
+    signinPw: async (ctx, next) => {
+        let request = JSON.parse(ctx.request.body);
+
+        const token = jwt.sign({
+            phone: request.phone
+        }, global.config.jwtSecret, {
+            expiresIn: 36000
+        })
+
+        let user = await knex('users').where({
+            phone: request.phone
+        }).select('id');
+
+        if (_.isEmpty(user)) {
+            throw Error('请先注册');
         } else {
             let user = await knex('users').where({
-                phone: request.phone
+                phone: request.phone,
+                password: request.password
             }).select('id');
 
             if (_.isEmpty(user)) {
-                await knex('users').insert({
-                    phone: request.phone
-                });
-            }
-
-            ctx.body = {
-                token: token
-            };
+                throw Error('密码错误');
+            } 
         }
+
+        ctx.body = {
+            token: token
+        };
+    },
+
+    signup: async (ctx, next) => {
+        let request = JSON.parse(ctx.request.body);
+
+        const token = jwt.sign({
+            phone: request.phone
+        }, global.config.jwtSecret, {
+            expiresIn: 36000
+        })
+
+        let vc = await knex('vc').where({
+            phone: request.phone,
+            vc: request.vc
+        }).select('id');
+
+        if (_.isEmpty(vc)) {
+            throw Error('验证码错误');
+        }
+
+        await knex('users').insert({
+            created_date: new Date(),
+            phone: request.phone,
+            password: request.password
+        });
+
+        ctx.body = {
+            token: token
+        };
     },
 
     getProfile: async (ctx, next) => {

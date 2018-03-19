@@ -7,14 +7,20 @@ const router = Router();
 
 router.get('/', indexCtrl);
 router.post('/send_vc', usersCtrl.sendVc);
-router.post('/signin', usersCtrl.signin);
+router.post('/signin_pw', usersCtrl.signinPw);
+router.post('/signin_vc', usersCtrl.signinVc);
 router.get('/profile', usersCtrl.getProfile);
 router.put('/profile', usersCtrl.updateProfile);
 
-router.get('/projects', projectsCtrl.getProjects);
-router.get('/project/:id', projectsCtrl.getProject);
+router.get('/comodities', projectsCtrl.getComodities);
+router.get('/comodities/:id', projectsCtrl.getComodity);
 
-router.get('/transactions', projectsCtrl.getTransactions);
+router.post('/payments', projectsCtrl.createPayment);
+
+router.get('/properties', projectsCtrl.getProperties);
+//router.get('/properties/:id', projectsCtrl.getProperty);
+
+router.get('/logs', projectsCtrl.getLogs);
 router.post('/trade', projectsCtrl.trade);
 
 module.exports = router;
