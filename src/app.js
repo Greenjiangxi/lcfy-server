@@ -67,7 +67,7 @@ app.use(async (ctx, next) => {
 const port = parseInt(config.port || '3000');
 const server = http.createServer(app.callback());
 
-server.listen(port);
+server.listen(port, '0.0.0.0');
 server.on('error', error => {
   if (error.syscall !== 'listen') {
     throw error;
