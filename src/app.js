@@ -23,7 +23,7 @@ app.use(convert(bodyparser));
 app.use(convert(koabody({})));
 app.use(convert(json()));
 app.use(convert(logger()));
-app.use(jwt({secret: config.jwtSecret}).unless({path:[/^\/signin_pw/,/^\/signin_vc/, /^\/signup/, /^\/send_vc/, /^\/home/]}))
+app.use(jwt({secret: config.jwtSecret}).unless({path:[/^\//,/^\/signin_pw/,/^\/signin_vc/, /^\/signup/, /^\/send_vc/, /^\/home/]}))
 
 // static
 app.use(
