@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const Promise = require('bluebird');
+const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const knex = require('knex')({
     client: 'mysql',
@@ -13,15 +14,26 @@ module.exports = {
     },
 
     getComodities: async (ctx, next) => {
-        let comodities = await knex('comodities').select('*');
-        
-        comodities = _.sortBy(comodities, ['id']);
+        let newComodities = [];
+        let comodities = await knex('comodities').where({state: 'ACTIVE'}).select('*');
 
-        ctx.body = comodities;
+        await Promise.map(comodities, async comodity => {
+            let user = await knex('users').where({
+                phone: comodity.owner
+            }).select('*');
+
+            comodity.owner = user[0].name;
+
+            newComodities.push(comodity);
+        });
+        
+        newComodities = _.sortBy(newComodities, ['id']);
+
+        ctx.body = newComodities;
     },
 
     getProperties: async (ctx, next) => {
-        let token = ctx.state.user;
+        let token = jwt.verify(ctx.header.authorization.split(' ')[1], global.config.jwtSecret);   
 
         let properties = await knex('comodities').where({
             owner: token.phone
@@ -38,11 +50,17 @@ module.exports = {
             id: id
         }).select('*');
 
+        let user = await knex('users').where({
+            phone: comodity[0].owner
+        }).select('*');
+
+        comodity[0].owner = user[0].name;
+
         ctx.body = comodity[0];
     },
 
     getLogs: async (ctx, next) => {
-        let token = ctx.state.user;
+        let token = jwt.verify(ctx.header.authorization.split(' ')[1], global.config.jwtSecret);  
         let newLogs = [];
 
         let logs = await knex('logs').where({
@@ -68,7 +86,7 @@ module.exports = {
     },
 
     trade: async (ctx, next) => {
-        let token = ctx.state.user;
+        let token = jwt.verify(ctx.header.authorization.split(' ')[1], global.config.jwtSecret);  
         let request = JSON.parse(ctx.request.body);
 
         await knex('transactions').insert({

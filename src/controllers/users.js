@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 const knex = require('knex')({
     client: 'mysql',
     connection: global.config.database
@@ -137,7 +137,7 @@ module.exports = {
     },
 
     getProfile: async (ctx, next) => {
-        let token = ctx.state.user;
+        let token = jwt.verify(ctx.header.authorization.split(' ')[1], global.config.jwtSecret);   
 
         let user = await knex('users').where({
             phone: token.phone
