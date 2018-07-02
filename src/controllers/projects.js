@@ -59,6 +59,41 @@ module.exports = {
         ctx.body = comodity[0];
     },
 
+    getToken: async (ctx, next) => {
+        let id = ctx.params.id;
+        let token = await knex('tokens').where({
+            id: id
+        }).select('*');
+
+        ctx.body = token[0];
+    },
+
+    getTransactions: async (ctx, next) => {
+        let id = ctx.params.id;
+        let transactions = await knex('transactions').where({
+            token_id: id
+        }).select('*');
+
+        ctx.body = transactions;
+    },
+
+    getTrend: async (ctx, next) => {
+        let id = ctx.params.id;
+
+        let newTrend = [];
+        let trend = await knex('trend').where({
+            token_id: id
+        }).select('*');
+
+        trend.forEach(point => {
+            newTrend.push({name:point.date, value:point.price});
+            
+        });
+        newTrend = _.sortBy(newTrend, ['value']);
+
+        ctx.body = newTrend;
+    },
+
     getLogs: async (ctx, next) => {
         let token = jwt.verify(ctx.header.authorization.split(' ')[1], global.config.jwtSecret);  
         let newLogs = [];
@@ -99,5 +134,14 @@ module.exports = {
         });
 
         ctx.body = {};
-    }
+    },
+
+    getTokens: async (ctx, next) => {
+        let tokens = await knex('tokens').select('*');
+        
+        tokens = _.sortBy(tokens, ['id']);
+
+        ctx.body = tokens;
+    },
+    
 };
